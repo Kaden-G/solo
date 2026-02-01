@@ -435,11 +435,11 @@ def main() -> None:
     # Initialize context (must happen before any path access)
     init_context(args.project_dir)
 
-    if args.command == "new-project":
-        # Scaffold project directory if --project-dir was given
-        if args.project_dir is not None:
-            _scaffold_project_dir(Path(args.project_dir).resolve())
+    # Scaffold project directory for any command that writes state
+    if args.project_dir is not None and args.command in ("new-project", "from-file", "edit"):
+        _scaffold_project_dir(Path(args.project_dir).resolve())
 
+    if args.command == "new-project":
         try:
             spec = collect_interactive()
         except (KeyboardInterrupt, EOFError):
