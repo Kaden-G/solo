@@ -63,7 +63,6 @@ def _prompt(label: str, required: bool = True, default: str = "") -> str:
 def _prompt_list(label: str, min_items: int = 0) -> list[str]:
     print(f"  {label}")
     print(f"    Separate with semicolons (;) on one line, or enter one per line.")
-    print(f"    Empty line to finish.")
     items = []
     while True:
         value = input("    - ").strip()
@@ -71,11 +70,14 @@ def _prompt_list(label: str, min_items: int = 0) -> list[str]:
             if len(items) < min_items:
                 print(f"    ^ At least {min_items} item(s) required.")
                 continue
-            break
-        parts = [p.strip() for p in value.split(";") if p.strip()]
-        items.extend(parts)
-        if len(parts) > 1:
-            print(f"    ^ Added {len(parts)} items ({len(items)} total)")
+        else:
+            parts = [p.strip() for p in value.split(";") if p.strip()]
+            items.extend(parts)
+            if len(parts) > 1:
+                print(f"    ^ Added {len(parts)} items ({len(items)} total)")
+        if len(items) >= min_items:
+            if not _prompt_yn(f"Add more? ({len(items)} so far)", default=False):
+                break
     return items
 
 
