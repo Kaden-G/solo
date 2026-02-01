@@ -1,11 +1,13 @@
 """Main Prefect flow — THE entry point. Catches DecisionRequired exceptions."""
 
 import logging
+from pathlib import Path
 
 from prefect import flow
 
 from engine.decision_gates import DecisionRequired, require_decision, save_decision
 from engine.notifier import notify
+from engine.state_loader import STATE_DIR
 from tasks.bootstrap import bootstrap_project
 from tasks.design import design_system
 from tasks.implement import implement_system
@@ -14,12 +16,34 @@ from tasks.verify import verify_system
 
 logger = logging.getLogger(__name__)
 
+REQUIRED_INPUTS = [
+    "inputs/project_spec.yml",
+    "inputs/REQUIREMENTS.md",
+    "inputs/CONSTRAINTS.md",
+    "inputs/NON_GOALS.md",
+    "inputs/ACCEPTANCE_CRITERIA.md",
+]
+
+
+def _verify_intake() -> None:
+    """Hard gate: refuse to run if intake has not been completed."""
+    missing = [f for f in REQUIRED_INPUTS if not (STATE_DIR / f).exists()]
+    if missing:
+        raise RuntimeError(
+            "Intake has not been completed. Run intake first:\n"
+            "  python -m intake.intake new-project\n"
+            f"Missing: {', '.join(missing)}"
+        )
+
 
 @flow(name="Autonomous Build Flow")
 def autonomous_build() -> None:
     """Run the full autonomous build pipeline with human-in-the-loop gates."""
 
-    # Step 1: Bootstrap — copy templates to state/inputs/
+    # Phase 0 gate: intake must be complete
+    _verify_intake()
+
+    # Step 1: Bootstrap — verify inputs and initialize trace
     logger.info("Starting bootstrap...")
     bootstrap_project()
 

@@ -19,10 +19,28 @@ A Prefect-based autonomous build engine with human-in-the-loop decision gates.
 ## Architecture
 
 ```
-templates/          Fill these in with your project specs
-    ├── prompts/    LLM prompt templates (logged by hash in TRACE.json)
-    ↓
-[bootstrap] ──→ state/inputs/
+┌──────────────────────────┐
+│ Intake Layer             │  ← Phase 0: human-driven, blocking
+│ (intake CLI / YAML file) │
+└────────────┬─────────────┘
+             │ validated, complete
+┌────────────▼─────────────┐
+│ Normalized Project Spec  │  ← machine contract
+│ (state/inputs/)          │
+└────────────┬─────────────┘
+             │ read-only
+┌────────────▼─────────────┐
+│ Autonomous Engine        │  ← Phase 1: machine-driven, no ambiguity
+│ (Prefect flow)           │
+└──────────────────────────┘
+```
+
+### Pipeline Stages
+
+```
+[intake]    ──→ state/inputs/project_spec.yml + rendered artifacts
+                    ↓
+[bootstrap] ──→ verify inputs, init TRACE.json
                     ↓
 [design]    ──→ state/designs/      ←── may pause at decision gate
                     ↓
@@ -39,10 +57,16 @@ templates/          Fill these in with your project specs
 2. **Gates are policy, not behavior** — tasks raise `DecisionRequired`; only the flow may pause execution
 3. **Structured state** — `state/` has predefined subfolders, not a flat directory
 4. **Traceability** — every task appends to `state/TRACE.json` with inputs, outputs, model, and prompt hash
+5. **No ambiguity at runtime** — all ambiguity is resolved during intake, before execution begins
 
 ### Decision Gates
 
-When a task encounters ambiguity requiring human judgment, it raises `DecisionRequired`. The flow catches this, pauses via Prefect's `pause_flow_run`, and waits for input through the Prefect UI. Decisions are recorded in `state/decisions/` so tasks can read them on re-run.
+After intake, decision gates are **only** for:
+- Architectural tradeoffs (A vs B)
+- Performance vs cost decisions
+- Optional enhancements
+
+**Not** for missing requirements, clarification questions, or incomplete specs. Those are blocked at intake.
 
 Gate definitions live in `templates/DECISION_GATES.yml`.
 
@@ -55,6 +79,25 @@ pip install -e .
 
 ## Usage
 
+### Step 1: Intake (required)
+
+Interactive:
+```bash
+python -m intake.intake new-project
+```
+
+Or from a YAML file:
+```bash
+python -m intake.intake from-file path/to/project_spec.yml
+```
+
+Validate only:
+```bash
+python -m intake.intake validate path/to/project_spec.yml
+```
+
+### Step 2: Run the engine
+
 ```bash
 # Start Prefect server (separate terminal)
 prefect server start
@@ -62,6 +105,8 @@ prefect server start
 # Run the flow
 python -c "from flows.autonomous_flow import autonomous_build; autonomous_build()"
 ```
+
+The engine will refuse to start if intake has not been completed.
 
 The flow will appear in the Prefect UI at `http://localhost:4200`. If a decision gate triggers, resume from the UI.
 
@@ -79,13 +124,17 @@ Set API keys via environment variables: `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`.
 ## Project Structure
 
 ```
+intake/             Project intake CLI and Pydantic schema
+  schema.py         Canonical ProjectSpec definition
+  renderer.py       Generates engine artifacts from validated spec
+  intake.py         CLI entry point (new-project, from-file, validate)
 engine/             Core modules (LLM provider, gates, state, tracing, notifications)
 flows/              Prefect flow definition — the entry point
 tasks/              Individual pipeline stages as Prefect tasks
-templates/          Input skeletons and prompt templates
+templates/          Skeleton templates and prompt files
   prompts/          LLM prompt files (tracked by SHA-256 hash in TRACE.json)
 state/              Runtime artifacts (gitignored except .gitkeep)
-  inputs/           Bootstrapped templates
+  inputs/           Intake-generated artifacts (project_spec.yml + rendered markdown)
   designs/          Architecture documents
   implementations/  Generated code
   tests/            Test and verification results
