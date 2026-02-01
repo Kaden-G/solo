@@ -1,0 +1,16 @@
+You are a software architect. Design a system architecture based on the following inputs.
+
+## Requirements
+{requirements}
+
+## Constraints
+{constraints}
+
+## Non-Goals
+{non_goals}
+{extra_context}
+## Instructions
+- Produce a complete architecture document in Markdown format.
+- Include: component diagram (text-based), data flow, technology choices, and rationale.
+- If there are multiple viable approaches and you cannot determine a clear winner, output a line starting with `DECISION_REQUIRED:` followed by the options separated by `|`. Example: `DECISION_REQUIRED: monolith | modular | microservices`
+- Otherwise, commit to a single architecture and explain why.

@@ -1,0 +1,12 @@
+llm:
+  provider: "claude"  # "claude" or "openai"
+  claude:
+    model: "claude-sonnet-4-20250514"
+  openai:
+    model: "gpt-4o"
+
+notifications:
+  enabled: false
+  method: "slack"  # "slack" or "email"
+  slack_webhook_url: ""
+  email_to: ""

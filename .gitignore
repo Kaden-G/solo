@@ -1,0 +1,32 @@
+# State directory contents (except .gitkeep and TRACE.json init)
+state/inputs/*
+state/designs/*
+state/implementations/*
+state/tests/*
+state/decisions/*
+!state/**/.gitkeep
+!state/TRACE.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "autonomy-engine"
+version = "1.1.0"
+description = "Prefect-based autonomous build engine with human-in-the-loop decision gates"
+requires-python = ">=3.10"
+dependencies = [
+    "prefect>=3.0",
+    "anthropic",
+    "openai",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

@@ -1,0 +1,16 @@
+You are a senior software engineer. Generate an implementation based on the approved architecture.
+
+## Architecture
+{architecture}
+
+## Requirements
+{requirements}
+
+## Constraints
+{constraints}
+
+## Instructions
+- Produce implementation code and documentation in Markdown format.
+- Include: file structure, key modules with code, configuration files, and setup instructions.
+- Follow the architecture exactly. Do not deviate from approved design decisions.
+- Mark any sections where you made minor implementation choices with `<!-- IMPL_CHOICE: reason -->`.
