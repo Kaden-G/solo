@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 
 import yaml
 
+from engine.context import get_config_path
+
 
 class LLMProvider(ABC):
     @abstractmethod
@@ -49,8 +51,10 @@ class OpenAIProvider(LLMProvider):
         return response.choices[0].message.content
 
 
-def get_provider(config_path: str = "config.yml") -> LLMProvider:
+def get_provider(config_path: str | None = None) -> LLMProvider:
     """Factory: return the LLM provider specified in config."""
+    if config_path is None:
+        config_path = str(get_config_path())
     with open(config_path) as f:
         config = yaml.safe_load(f)
 

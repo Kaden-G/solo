@@ -81,14 +81,30 @@ pip install -e .
 
 ### Step 1: Intake (required)
 
-Interactive:
+Interactive (engine root — default):
 ```bash
 python -m intake.intake new-project
 ```
 
+Interactive (external project directory):
+```bash
+python -m intake.intake --project-dir ~/projects/solo1 new-project
+```
+
+This scaffolds the project directory with a copy of `config.yml`, `templates/`, and
+the `state/` folder structure, then runs the interactive intake. Edit the copied
+templates to customize prompts per-project.
+
 Or from a YAML file:
 ```bash
 python -m intake.intake from-file path/to/project_spec.yml
+python -m intake.intake --project-dir ~/projects/solo1 from-file path/to/project_spec.yml
+```
+
+Edit an existing spec:
+```bash
+python -m intake.intake edit
+python -m intake.intake --project-dir ~/projects/solo1 edit
 ```
 
 Validate only:
@@ -102,13 +118,36 @@ python -m intake.intake validate path/to/project_spec.yml
 # Start Prefect server (separate terminal)
 prefect server start
 
-# Run the flow
-python -c "from flows.autonomous_flow import autonomous_build; autonomous_build()"
+# Run the flow (engine root)
+python flows/autonomous_flow.py
+
+# Run the flow against an external project
+python flows/autonomous_flow.py --project-dir ~/projects/solo1
 ```
 
 The engine will refuse to start if intake has not been completed.
 
 The flow will appear in the Prefect UI at `http://localhost:4200`. If a decision gate triggers, resume from the UI.
+
+### Project directory layout
+
+When using `--project-dir`, the scaffolded directory looks like:
+
+```
+~/projects/solo1/
+  config.yml              # Copied from engine — edit to customize
+  templates/              # Copied from engine — edit to customize
+    DECISION_GATES.yml
+    REQUIREMENTS.md, CONSTRAINTS.md, NON_GOALS.md, ACCEPTANCE_CRITERIA.md
+    prompts/
+      design.txt, implement.txt, test.txt, verify.txt
+  state/
+    TRACE.json
+    inputs/ designs/ implementations/ tests/ decisions/
+```
+
+Without `--project-dir`, all state and config lives in the engine root (unchanged
+from previous behavior).
 
 ## Configuration
 
@@ -129,6 +168,7 @@ intake/             Project intake CLI and Pydantic schema
   renderer.py       Generates engine artifacts from validated spec
   intake.py         CLI entry point (new-project, from-file, validate)
 engine/             Core modules (LLM provider, gates, state, tracing, notifications)
+  context.py        Singleton path context — resolves project vs engine root paths
 flows/              Prefect flow definition — the entry point
 tasks/              Individual pipeline stages as Prefect tasks
 templates/          Skeleton templates and prompt files

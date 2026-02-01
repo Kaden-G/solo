@@ -1,14 +1,11 @@
 """Verify task — check test results against acceptance criteria."""
 
-from pathlib import Path
-
 from prefect import task
 
+from engine.context import get_prompts_dir
 from engine.llm_provider import get_provider
 from engine.state_loader import load_state_file, save_state_file
 from engine.tracer import hash_prompt, trace
-
-PROMPTS_DIR = Path(__file__).resolve().parent.parent / "templates" / "prompts"
 
 
 @task(name="verify")
@@ -18,7 +15,7 @@ def verify_system() -> None:
     acceptance = load_state_file("inputs/ACCEPTANCE_CRITERIA.md")
     requirements = load_state_file("inputs/REQUIREMENTS.md")
 
-    prompt_template = (PROMPTS_DIR / "verify.txt").read_text()
+    prompt_template = (get_prompts_dir() / "verify.txt").read_text()
     prompt = prompt_template.format(
         test_results=test_results,
         acceptance_criteria=acceptance,

@@ -1,14 +1,11 @@
 """Implement task — LLM generates code from the approved design."""
 
-from pathlib import Path
-
 from prefect import task
 
+from engine.context import get_prompts_dir
 from engine.llm_provider import get_provider
 from engine.state_loader import load_state_file, save_state_file
 from engine.tracer import hash_prompt, trace
-
-PROMPTS_DIR = Path(__file__).resolve().parent.parent / "templates" / "prompts"
 
 
 @task(name="implement")
@@ -18,7 +15,7 @@ def implement_system() -> None:
     requirements = load_state_file("inputs/REQUIREMENTS.md")
     constraints = load_state_file("inputs/CONSTRAINTS.md")
 
-    prompt_template = (PROMPTS_DIR / "implement.txt").read_text()
+    prompt_template = (get_prompts_dir() / "implement.txt").read_text()
     prompt = prompt_template.format(
         architecture=architecture,
         requirements=requirements,

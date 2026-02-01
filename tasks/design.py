@@ -1,15 +1,12 @@
 """Design task — LLM generates architecture from requirements."""
 
-from pathlib import Path
-
 from prefect import task
 
+from engine.context import get_prompts_dir, get_state_dir
 from engine.decision_gates import DecisionRequired
 from engine.llm_provider import get_provider
-from engine.state_loader import STATE_DIR, decision_exists, load_state_file
+from engine.state_loader import decision_exists, load_state_file
 from engine.tracer import hash_prompt, trace
-
-PROMPTS_DIR = Path(__file__).resolve().parent.parent / "templates" / "prompts"
 
 
 @task(name="design")
@@ -19,10 +16,12 @@ def design_system() -> None:
     constraints = load_state_file("inputs/CONSTRAINTS.md")
     non_goals = load_state_file("inputs/NON_GOALS.md")
 
+    state_dir = get_state_dir()
+
     # Decision guard: if a prior run raised DecisionRequired, check that
     # the decision was recorded before re-running
     decision_key = "architecture_choice_needed"
-    if (STATE_DIR / "decisions" / f"{decision_key}.md").exists():
+    if (state_dir / "decisions" / f"{decision_key}.md").exists():
         decision_content = load_state_file(f"decisions/{decision_key}.md")
         # Extract choice from decision file
         for line in decision_content.splitlines():
@@ -35,7 +34,7 @@ def design_system() -> None:
     else:
         extra_context = ""
 
-    prompt_template = (PROMPTS_DIR / "design.txt").read_text()
+    prompt_template = (get_prompts_dir() / "design.txt").read_text()
     prompt = prompt_template.format(
         requirements=requirements,
         constraints=constraints,

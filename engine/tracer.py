@@ -3,10 +3,13 @@
 import hashlib
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 
-STATE_DIR = Path(__file__).resolve().parent.parent / "state"
-TRACE_PATH = STATE_DIR / "TRACE.json"
+from engine.context import get_state_dir
+
+
+def _trace_path():
+    """Return the path to TRACE.json in the active project's state dir."""
+    return get_state_dir() / "TRACE.json"
 
 
 def trace(
@@ -29,7 +32,7 @@ def trace(
     if prompt_hash:
         entry["prompt_hash"] = prompt_hash
     entries.append(entry)
-    TRACE_PATH.write_text(json.dumps(entries, indent=2) + "\n")
+    _trace_path().write_text(json.dumps(entries, indent=2) + "\n")
 
 
 def hash_prompt(prompt_text: str) -> str:
@@ -39,9 +42,10 @@ def hash_prompt(prompt_text: str) -> str:
 
 def _load_trace() -> list[dict]:
     """Load the current TRACE.json entries."""
-    if not TRACE_PATH.exists():
+    tp = _trace_path()
+    if not tp.exists():
         return []
-    text = TRACE_PATH.read_text().strip()
+    text = tp.read_text().strip()
     if not text:
         return []
     return json.loads(text)

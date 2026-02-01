@@ -1,13 +1,13 @@
 """Main Prefect flow — THE entry point. Catches DecisionRequired exceptions."""
 
+import argparse
 import logging
-from pathlib import Path
 
 from prefect import flow
 
+from engine.context import get_state_dir, init as init_context
 from engine.decision_gates import DecisionRequired, require_decision, save_decision
 from engine.notifier import notify
-from engine.state_loader import STATE_DIR
 from tasks.bootstrap import bootstrap_project
 from tasks.design import design_system
 from tasks.implement import implement_system
@@ -27,7 +27,8 @@ REQUIRED_INPUTS = [
 
 def _verify_intake() -> None:
     """Hard gate: refuse to run if intake has not been completed."""
-    missing = [f for f in REQUIRED_INPUTS if not (STATE_DIR / f).exists()]
+    state_dir = get_state_dir()
+    missing = [f for f in REQUIRED_INPUTS if not (state_dir / f).exists()]
     if missing:
         raise RuntimeError(
             "Intake has not been completed. Run intake first:\n"
@@ -37,8 +38,11 @@ def _verify_intake() -> None:
 
 
 @flow(name="Autonomous Build Flow")
-def autonomous_build() -> None:
+def autonomous_build(project_dir: str | None = None) -> None:
     """Run the full autonomous build pipeline with human-in-the-loop gates."""
+
+    # Initialize project context
+    init_context(project_dir)
 
     # Phase 0 gate: intake must be complete
     _verify_intake()
@@ -83,4 +87,11 @@ def _run_with_gate(task_fn) -> None:
 
 
 if __name__ == "__main__":
-    autonomous_build()
+    parser = argparse.ArgumentParser(description="Run the Autonomous Build Flow")
+    parser.add_argument(
+        "--project-dir",
+        default=None,
+        help="Path to an external project directory (default: engine root)",
+    )
+    cli_args = parser.parse_args()
+    autonomous_build(project_dir=cli_args.project_dir)

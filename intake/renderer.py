@@ -4,29 +4,30 @@ from pathlib import Path
 
 import yaml
 
-from engine.state_loader import STATE_DIR
+from engine.context import get_state_dir
 from intake.schema import ProjectSpec
 
 
 def render_all(spec: ProjectSpec) -> list[str]:
     """Generate all state/inputs/ artifacts from the spec. Returns list of written paths."""
-    inputs_dir = STATE_DIR / "inputs"
+    state_dir = get_state_dir()
+    inputs_dir = state_dir / "inputs"
     inputs_dir.mkdir(parents=True, exist_ok=True)
 
     written = []
 
-    written.append(_write(inputs_dir / "REQUIREMENTS.md", _render_requirements(spec)))
-    written.append(_write(inputs_dir / "CONSTRAINTS.md", _render_constraints(spec)))
-    written.append(_write(inputs_dir / "NON_GOALS.md", _render_non_goals(spec)))
-    written.append(_write(inputs_dir / "ACCEPTANCE_CRITERIA.md", _render_acceptance(spec)))
-    written.append(_write(inputs_dir / "project_spec.yml", _render_spec_yaml(spec)))
+    written.append(_write(inputs_dir / "REQUIREMENTS.md", _render_requirements(spec), state_dir))
+    written.append(_write(inputs_dir / "CONSTRAINTS.md", _render_constraints(spec), state_dir))
+    written.append(_write(inputs_dir / "NON_GOALS.md", _render_non_goals(spec), state_dir))
+    written.append(_write(inputs_dir / "ACCEPTANCE_CRITERIA.md", _render_acceptance(spec), state_dir))
+    written.append(_write(inputs_dir / "project_spec.yml", _render_spec_yaml(spec), state_dir))
 
     return written
 
 
-def _write(path: Path, content: str) -> str:
+def _write(path: Path, content: str, state_dir: Path) -> str:
     path.write_text(content)
-    return str(path.relative_to(STATE_DIR))
+    return str(path.relative_to(state_dir))
 
 
 def _render_requirements(spec: ProjectSpec) -> str:

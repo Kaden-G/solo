@@ -4,11 +4,15 @@ import logging
 
 import yaml
 
+from engine.context import get_config_path
+
 logger = logging.getLogger(__name__)
 
 
-def notify(message: str, config_path: str = "config.yml") -> None:
+def notify(message: str, config_path: str | None = None) -> None:
     """Send a notification via the configured method, or log if disabled."""
+    if config_path is None:
+        config_path = str(get_config_path())
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
